@@ -87,7 +87,7 @@ open_folder_frame.grid(row=2, padx=10, pady=10, sticky="we")
 open_folder_frame.grid_columnconfigure(0, weight=1)
 
 ctk.CTkLabel(
-    master=open_folder_frame, text="Open Folder:", text_font=("Arial bold", -12)
+    master=open_folder_frame, text="Open folder:", text_font=("Arial bold", -12)
 ).grid(row=0, pady=5, padx=5, sticky="we")
 
 ctk.CTkButton(
@@ -106,15 +106,36 @@ ctk.CTkLabel(master=left_frame, text="Settings:", text_font=("Arial bold", -12))
     sticky="wes",
 )
 
-ctk.CTkButton(master=left_frame, text="Add to library", command=button_function).grid(
-    row=4, sticky="wes", pady=5, padx=10
+ctk.CTkButton(
+    master=left_frame, text="Add to library", command=lambda: fn.add_to_library(app)
+).grid(row=4, sticky="wes", pady=5, padx=10)
+
+
+def change_theme(theme):
+    config.theme = theme
+    config.save()
+    ctk.set_appearance_mode(theme)
+
+
+theme = ctk.CTkOptionMenu(
+    master=left_frame, values=["System", "Light", "Dark"], command=change_theme
 )
-
-theme = ctk.CTkOptionMenu(master=left_frame, values=["System", "Light", "Dark"])
 theme.grid(row=5, sticky="wes", pady=5, padx=10)
+theme.set("Theme")
 
-color = ctk.CTkOptionMenu(master=left_frame, values=["Green", "Blue", "Red"])
+
+def change_color(color: str):
+    color = "-".join(color.lower().split(" "))
+    config.color = color
+    config.save()
+    ctk.set_default_color_theme(color)
+
+
+color = ctk.CTkOptionMenu(
+    master=left_frame, values=["Green", "Blue", "Dark Blue"], command=change_color
+)
 color.grid(row=6, sticky="wes", pady=5, padx=10)
+color.set("Color")
 
 
 # Auto Change
@@ -126,7 +147,7 @@ auto_change_frame.grid_columnconfigure(1, weight=1)
 
 ctk.CTkLabel(
     master=auto_change_frame,
-    text="Auto change Wallpaper:",
+    text="Auto change wallpaper:",
     text_font=("Arial bold", -12),
 ).grid(
     row=0,
@@ -184,8 +205,8 @@ ctk.CTkLabel(
 ctk.CTkButton(
     master=clear_wallpapers_frame,
     text="Clear Temporary Wallpapers",
-    fg_color="#888",
-    hover_color="#800",
+    fg_color=["#aaa", "#777"],
+    hover_color=["#a44", "#800"],
     command=button_function,
 ).grid(row=1, sticky="we", pady=5, padx=5)
 
@@ -193,8 +214,8 @@ ctk.CTkButton(
 ctk.CTkButton(
     master=clear_wallpapers_frame,
     text="Clear Library Wallpapers",
-    fg_color="#888",
-    hover_color="#800",
+    fg_color=["#aaa", "#777"],
+    hover_color=["#a44", "#800"],
     command=button_function,
 ).grid(row=1, column=1, sticky="we", pady=5, padx=5)
 
@@ -213,17 +234,26 @@ ctk.CTkLabel(master=filters_frame, text="Filters:", text_font=("Arial bold", -12
     padx=5,
 )
 
-filter_textbox = ctk.CTkTextbox(master=filters_frame, border_color="#00aa00")
+filter_textbox = ctk.CTkTextbox(master=filters_frame, border_color="#0a0")
 filter_textbox.grid(row=1, sticky="nwse", padx=10)
+filter_textbox.insert(ctk.INSERT, ", ".join(config.filters))
 
-ctk.CTkButton(master=filters_frame, text="Save", command=button_function).grid(
-    row=2, column=0, columnspan=2, sticky="we", pady=10, padx=5
+
+filter_textbox.textbox.bind(
+    "<Return>", lambda x: fn.set_filters(filter_textbox.textbox, config)
 )
+
+
+ctk.CTkButton(
+    master=filters_frame,
+    text="Save",
+    command=lambda: fn.set_filters(filter_textbox.textbox, config),
+).grid(row=2, column=0, columnspan=2, sticky="we", pady=10, padx=5)
 
 ctk.CTkLabel(
     master=filters_frame,
-    text="Avoid downloading any wallpaper contain following words.",
-    text_font=("Arial bold", -8),
+    text="Avoid downloading any wallpaper contain following words/phrase.\nWords/phrase are separated by comma(,).",
+    text_font=("Arial", -9),
 ).grid(row=10, columnspan=2, pady=0, padx=10)
 
 
