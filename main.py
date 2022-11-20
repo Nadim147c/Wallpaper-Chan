@@ -52,7 +52,7 @@ right_frame.grid_columnconfigure(0, weight=1)
 right_frame.grid_rowconfigure(2, weight=1)
 
 ctk.CTkLabel(
-    master=left_frame, text="Anime Wallpaper", text_font=("Arial bold", -20)
+    master=left_frame, text="Wallpaper Chan", text_font=("Arial bold", -20)
 ).grid(row=0, pady=10, padx=10)
 
 
@@ -251,6 +251,7 @@ filters_frame.grid_rowconfigure(1, weight=1)
 
 ctk.CTkLabel(master=filters_frame, text="Filters:", text_font=("Arial bold", -12)).grid(
     row=0,
+    columnspan=2,
     pady=5,
     padx=5,
 )
@@ -350,7 +351,6 @@ filter_entry.grid(row=2, column=0, padx=10, sticky="we")
 
 
 filter_entry.bind("<Return>", lambda x: add_filter(filter_entry.entry))
-
 
 ctk.CTkButton(
     master=filters_frame, text="add", command=lambda: add_filter(filter_entry.entry)

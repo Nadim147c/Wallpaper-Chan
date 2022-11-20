@@ -1,21 +1,16 @@
-from datetime import datetime
 from tkinter import filedialog
 from pystray import Menu, MenuItem, Icon
 from bs4 import BeautifulSoup
 from glob import glob
-from PIL import Image
-from threading import Thread
 import shutil
 import subprocess
 import json
 import os
 import random
 import re
-import time
 import ctypes
 import requests
 import hashlib
-import winreg
 
 
 class Config:
@@ -82,7 +77,7 @@ def set_from_wallpaper_abyss(config):
             title = container.div.a["title"]
             regex = "|".join(config.filters)
 
-            if re.search(regex, title, re.IGNORECASE):
+            if not len(config.filters) == 0 and re.search(regex, title, re.IGNORECASE):
                 continue
 
             url = container.div.a.picture.img["src"]
@@ -123,103 +118,3 @@ def add_to_library(app):
     for file in file_names:
         name = file.split("/")[-1]
         shutil.copy(src=file, dst=f"library/{name}")
-
-
-"""
-
-def reset():
-    ctypes.windll.user32.SystemParametersInfoW(
-        20, 0, os.path.abspath("assets/default.jpg"), 0)
-
-
-def stop():
-    icon.stop()
-
-
-def get_time_string(): return str(datetime.now())
-
-
-auto_change_string = get_time_string()
-
-
-def auto_change_wallpaper(method, time):
-    global auto_change_string
-
-    timestr = get_time_string()
-    auto_change_string = timestr
-
-    while timestr == auto_change_string:
-        if method == 1:
-            set_from_library(False)
-        elif method == 2:
-            set_from_wallpaper_abyss()
-        time.sleep(time)
-
-
-def set_auto_changer(method, time):
-    global auto_change
-    if auto_change["method"] == method and auto_change["time"] == time:
-        method = 0
-    auto_change["time"] = time
-    auto_change["method"] = method
-    config["auto-change"] = auto_change
-    with open("config.json", "w") as outfile:
-        outfile.write(json.dumps(config, indent=4))
-        outfile.close()
-
-
-def set_auto_changer_checked(method, time):
-    global auto_change
-    if auto_change["method"] == method and auto_change["time"] == time:
-        return True
-    else:
-        return False
-
-
-
-icon_image = Image.open(icon_path)
-
-icon = Icon("Wallpaper", icon_image,  title="Anime Wallpaper", menu=Menu(
-    MenuItem("Set Random Wallpaper", Menu(
-        MenuItem("Internet", lambda: Thread(
-            target=set_from_wallpaper_abyss).start()),
-        MenuItem("Library", set_from_library)
-    )),
-    MenuItem("Auto Change", Menu(
-        MenuItem("Internet", Menu(
-            MenuItem("Every Minute", action=lambda: set_auto_changer(
-                2, 60), checked=lambda e: set_auto_changer_checked(2, 60),),
-            MenuItem("Every 5 Minutes", action=lambda: set_auto_changer(
-                2, 60 * 5), checked=lambda e: set_auto_changer_checked(2, 60 * 5),),
-            MenuItem("Every 30 Minutes", action=lambda: set_auto_changer(
-                2, 60 * 30), checked=lambda e: set_auto_changer_checked(2, 60 * 30),),
-            MenuItem("Every Hour", action=lambda: set_auto_changer(
-                2, 60 * 60), checked=lambda e: set_auto_changer_checked(2, 60*60),),
-        )),
-        MenuItem("Library", Menu(
-            MenuItem("Every Minute", action=lambda: set_auto_changer(
-                1, 60), checked=lambda e: set_auto_changer_checked(1, 60),),
-            MenuItem("Every 5 Minutes", action=lambda: set_auto_changer(
-                1, 60 * 5), checked=lambda e: set_auto_changer_checked(1, 60 * 5),),
-            MenuItem("Every 30 Minutes", action=lambda: set_auto_changer(
-                1, 60 * 30), checked=lambda e: set_auto_changer_checked(1, 60 * 30),),
-            MenuItem("Every Hour", action=lambda: set_auto_changer(
-                1, 60 * 60), checked=lambda e: set_auto_changer_checked(1, 60*60),),
-        )),
-    )),
-    MenuItem("Open", Menu(
-        MenuItem("Temporary", action=lambda: open_folder("temp")),
-        MenuItem("Library", action=lambda: open_folder("library"))
-    )),
-    MenuItem("Settings", Menu(
-        MenuItem("Notifications", toggle_notification,
-                 checked=lambda i: notifications),
-        MenuItem("Filters", set_filters)
-    )),
-    MenuItem("Add to Library", add_to_library),
-    MenuItem("Reset Wallpaper", reset),
-    MenuItem("Exit", stop),
-))
-
-
-"""
