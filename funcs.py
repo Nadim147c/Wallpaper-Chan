@@ -20,7 +20,13 @@ import winreg
 
 class Config:
     def __init__(
-        self, auto_change, auto_change_time, auto_change_source, theme, color, filters
+        self,
+        auto_change: bool,
+        auto_change_time: int,
+        auto_change_source: int,
+        theme: str,
+        color: str,
+        filters: list[str],
     ):
         self.auto_change = auto_change
         self.auto_change_time = auto_change_time
@@ -104,14 +110,6 @@ def open_folder(path):
     FILEBROWSER_PATH = os.path.join(os.getenv("WINDIR"), "explorer.exe")
     path = os.path.normpath(path)
     subprocess.run([FILEBROWSER_PATH, path])
-
-
-def set_filters(text, config):
-    inputs = text.get(1.0, "end-1c")
-    filters = re.sub("( *,( |\n)*|\n ?)+", ",", inputs).split(",")
-    filters = list(filter(lambda str: len(str) > 0, filters))
-    config.filters = filters
-    config.save()
 
 
 def add_to_library(app):

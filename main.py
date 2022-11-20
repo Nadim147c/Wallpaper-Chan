@@ -1,7 +1,9 @@
 from threading import Thread
 import customtkinter as ctk
+import tkinter as tk
 import funcs as fn
 import os
+import time
 
 
 config = fn.Config.get_config()
@@ -115,6 +117,12 @@ def change_theme(theme):
     config.theme = theme
     config.save()
     ctk.set_appearance_mode(theme)
+    mode = ctk.appearance_mode_tracker.AppearanceModeTracker.get_mode()
+    if theme.lower() == "system":
+        mode = (
+            ctk.appearance_mode_tracker.AppearanceModeTracker.detect_appearance_mode()
+        )
+    filtered_tag_frame.configure(bg="#383838" if mode == 1 else "#d1d1d1")
 
 
 theme = ctk.CTkOptionMenu(
@@ -123,12 +131,24 @@ theme = ctk.CTkOptionMenu(
 theme.grid(row=5, sticky="wes", pady=5, padx=10)
 theme.set("Theme")
 
+color_change_warning = ctk.CTkLabel(
+    master=left_frame,
+    text="Restart the app!",
+    text_font=("Arial bold", -8),
+    text_color=["#800", "#a44"],
+)
+
 
 def change_color(color: str):
     color = "-".join(color.lower().split(" "))
     config.color = color
     config.save()
     ctk.set_default_color_theme(color)
+    color_change_warning.grid(
+        row=7,
+        sticky="wes",
+        pady=2,
+    )
 
 
 color = ctk.CTkOptionMenu(
@@ -228,33 +248,119 @@ filters_frame.grid(row=2, padx=10, pady=10, sticky="nwse")
 filters_frame.grid_columnconfigure(0, weight=1)
 filters_frame.grid_rowconfigure(1, weight=1)
 
+
 ctk.CTkLabel(master=filters_frame, text="Filters:", text_font=("Arial bold", -12)).grid(
     row=0,
     pady=5,
     padx=5,
 )
 
-filter_textbox = ctk.CTkTextbox(master=filters_frame, border_color="#0a0")
-filter_textbox.grid(row=1, sticky="nwse", padx=10)
-filter_textbox.insert(ctk.INSERT, ", ".join(config.filters))
 
+filtered_tag_frame = tk.Frame(
+    master=filters_frame,
+)
 
-filter_textbox.textbox.bind(
-    "<Return>", lambda x: fn.set_filters(filter_textbox.textbox, config)
+filtered_tag_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nwse")
+filtered_tag_frame.configure(
+    bg="#383838"
+    if ctk.appearance_mode_tracker.AppearanceModeTracker.appearance_mode == 1
+    else "#d1d1d1"
 )
 
 
+def remove_filter(i):
+    del config.filters[i]
+    config.save()
+    show_filters()
+
+
+def add_filter(text):
+    text_content = text.get()
+    text.delete(0, len(text_content))
+    config.filters.append(text_content)
+    config.save()
+    show_filters()
+
+
+def show_filters(*args):
+    width = app.winfo_width()
+    height = app.winfo_height()
+
+    if not len(args) == 0:
+        time.sleep(1)
+
+    if not width == app.winfo_width():
+        return
+    elif not height == app.winfo_height():
+        return
+
+    for widgets in filtered_tag_frame.winfo_children():
+        widgets.destroy()
+
+    app.update()
+
+    filtered_tag_frame_width = filtered_tag_frame.winfo_width()
+    filtered_tag_frame_height = filtered_tag_frame.winfo_height()
+
+    padx = 5 / filtered_tag_frame_width
+    pady = 5 / filtered_tag_frame_height
+
+    tag_x = 0
+    tag_y = pady
+
+    rely_increase = 30 / filtered_tag_frame_height
+
+    for i, tag in enumerate(config.filters):
+        label = ctk.CTkButton(
+            master=filtered_tag_frame,
+            text=tag,
+            text_font=("Arial Bold", -12),
+            corner_radius=10,
+            command=lambda: remove_filter(i),
+            width=1,
+            height=1,
+        )
+
+        tag_x += padx
+
+        label.place(relx=tag_x, rely=tag_y)
+
+        filtered_tag_frame.update()
+
+        relx_increase = label.winfo_width() / filtered_tag_frame_width
+
+        tag_x += relx_increase
+
+        if tag_x > 1:
+            tag_y += rely_increase + pady
+            tag_x = 0 + padx
+
+            label.place(relx=tag_x, rely=tag_y)
+
+            tag_x += relx_increase
+
+
+filtered_tag_frame.bind(
+    "<Configure>", lambda x: Thread(target=lambda: show_filters(x)).start()
+)
+
+
+filter_entry = ctk.CTkEntry(master=filters_frame, border_color="#0a0")
+filter_entry.grid(row=2, column=0, padx=10, sticky="we")
+
+
+filter_entry.bind("<Return>", lambda x: add_filter(filter_entry.entry))
+
+
 ctk.CTkButton(
-    master=filters_frame,
-    text="Save",
-    command=lambda: fn.set_filters(filter_textbox.textbox, config),
-).grid(row=2, column=0, columnspan=2, sticky="we", pady=10, padx=5)
+    master=filters_frame, text="add", command=lambda: add_filter(filter_entry.entry)
+).grid(row=2, column=1, sticky="we", pady=10, padx=5)
 
 ctk.CTkLabel(
     master=filters_frame,
-    text="Avoid downloading any wallpaper contain following words/phrase.\nWords/phrase are separated by comma(,).",
+    text="Avoid downloading any wallpaper contain following words/phrase.",
     text_font=("Arial", -9),
-).grid(row=10, columnspan=2, pady=0, padx=10)
+).grid(row=4, columnspan=2, pady=0, padx=10)
 
 
 app.mainloop()
