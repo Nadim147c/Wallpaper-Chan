@@ -1,5 +1,5 @@
 .vscode
 library
 temp
-__pycache__
 config.json
+__pycache__
