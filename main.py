@@ -2,11 +2,13 @@ from threading import Thread
 import customtkinter as ctk
 import tkinter as tk
 import funcs as fn
+import set_random as set_rand
+import config
 import os
 import time
 
 
-config = fn.Config.get_config()
+config = config.Config.get_config()
 
 if not os.path.exists("library"):
     os.mkdir("library")
@@ -21,7 +23,7 @@ app = ctk.CTk()
 app.title("Wallpaper Chan")
 
 window_height = 600
-window_width = 600
+window_width = 700
 
 screen_width = app.winfo_screenwidth()
 screen_height = app.winfo_screenheight()
@@ -29,7 +31,7 @@ screen_height = app.winfo_screenheight()
 x = int((screen_width / 2) - (window_width / 2))
 y = int((screen_height / 2) - (window_height / 2))
 
-app.geometry(f"{window_height}x{window_width}+{x}+{y}")
+app.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
 app.grid_rowconfigure(0, weight=1)
 app.grid_columnconfigure(1, weight=1)
@@ -71,13 +73,15 @@ ctk.CTkLabel(
 ctk.CTkButton(
     master=set_random_frame,
     text="Internet",
-    command=lambda: Thread(target=lambda: fn.set_from_wallpaper_abyss(config)).start(),
+    command=lambda: Thread(
+        target=lambda: set_rand.set_from_wallpaper_abyss(config)
+    ).start(),
 ).grid(row=1, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=set_random_frame,
     text="Library",
-    command=lambda: Thread(target=fn.set_from_library).start(),
+    command=lambda: Thread(target=set_rand.set_from_library).start(),
 ).grid(row=2, pady=10, padx=5, sticky="we")
 
 
@@ -227,7 +231,7 @@ ctk.CTkButton(
     text="Clear Temporary Wallpapers",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=button_function,
+    command=lambda: fn.clear_folder("temp", app),
 ).grid(row=1, sticky="we", pady=5, padx=5)
 
 
@@ -236,7 +240,7 @@ ctk.CTkButton(
     text="Clear Library Wallpapers",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=button_function,
+    command=lambda: fn.clear_folder("library", app),
 ).grid(row=1, column=1, sticky="we", pady=5, padx=5)
 
 
@@ -268,11 +272,12 @@ filtered_tag_frame.configure(
     else "#d1d1d1"
 )
 
-
+# todo: fix this index bug
 def remove_filter(i):
-    del config.filters[i]
-    config.save()
-    show_filters()
+    print(i)
+    # del config.filters[i]
+    # config.save()
+    # show_filters()
 
 
 def add_filter(text):
@@ -296,6 +301,7 @@ def show_filters(*args):
         return
 
     for widgets in filtered_tag_frame.winfo_children():
+        print(widgets.text)
         widgets.destroy()
 
     app.update()
@@ -314,7 +320,7 @@ def show_filters(*args):
     for i, tag in enumerate(config.filters):
         label = ctk.CTkButton(
             master=filtered_tag_frame,
-            text=tag,
+            text=f"{str(i + 1)}.{tag}",
             text_font=("Arial Bold", -12),
             corner_radius=10,
             command=lambda: remove_filter(i),

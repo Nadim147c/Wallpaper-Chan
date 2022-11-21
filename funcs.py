@@ -1,104 +1,9 @@
 from tkinter import filedialog
-from pystray import Menu, MenuItem, Icon
-from bs4 import BeautifulSoup
 from glob import glob
+import customtkinter as ctk
 import shutil
 import subprocess
-import json
 import os
-import random
-import re
-import ctypes
-import requests
-import hashlib
-
-
-class Config:
-    def __init__(
-        self,
-        auto_change: bool,
-        auto_change_time: int,
-        auto_change_source: int,
-        theme: str,
-        color: str,
-        filters: list[str],
-    ):
-        self.auto_change = auto_change
-        self.auto_change_time = auto_change_time
-        self.auto_change_source = auto_change_source
-        self.theme = theme
-        self.color = color
-        self.filters = filters
-
-    def get_config():
-        if os.path.exists("config.json"):
-            with open("config.json", "r") as open_file:
-                config = json.loads(open_file.read())
-                open_file.close()
-        else:
-            config = {
-                "auto_change": True,
-                "auto_change_time": 60,
-                "auto_change_source": 0,
-                "theme": "system",
-                "color": "green",
-                "filters": [],
-            }
-            with open("config.json", "w") as outfile:
-                outfile.write(json.dumps(config, indent=4))
-                outfile.close()
-
-        return Config(**config)
-
-    def save(self):
-        with open("config.json", "w") as outfile:
-            outfile.write(json.dumps(self.__dict__, indent=4))
-            outfile.close()
-
-    def __repr__(self) -> str:
-        return "<Config>"
-
-
-def set_from_wallpaper_abyss(config):
-    page = random.randint(1, 500)
-
-    wallpapers = []
-
-    while len(wallpapers) == 0:
-        htmlContent = requests.get(
-            f"https://wall.alphacoders.com/by_category.php?id=3&name=Anime+Wallpapers&filter=4K+Ultra+HD&page={page}"
-        ).text
-
-        soup = BeautifulSoup(htmlContent, "html.parser")
-
-        thumb_containers = soup.find_all("div", attrs={"class": "thumb-container"})
-
-        for container in thumb_containers:
-            title = container.div.a["title"]
-            regex = "|".join(config.filters)
-
-            if not len(config.filters) == 0 and re.search(regex, title, re.IGNORECASE):
-                continue
-
-            url = container.div.a.picture.img["src"]
-            wallpapers.append(f"{url}")
-
-    image = requests.get(random.choice(wallpapers))
-
-    hash_str = hashlib.md5(str(image.content).encode("utf-8")).hexdigest()
-    path = f"temp/{hash_str}.jpg"
-
-    with open(path, "wb") as file:
-        file.write(image.content)
-        file.close()
-
-    ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
-
-
-def set_from_library():
-    files = glob("library/*.jpg") + glob("library/*.png")
-    file = random.choice(files)
-    ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(file), 0)
 
 
 def open_folder(path):
@@ -109,7 +14,7 @@ def open_folder(path):
 
 def add_to_library(app):
     file_names = filedialog.askopenfilenames(
-        title="Anime Wallpaper",
+        title="Wallpaper Chan",
         initialdir="temp",
         filetypes=[("Image", r"*.jpg *.png")],
         parent=app,
@@ -118,3 +23,52 @@ def add_to_library(app):
     for file in file_names:
         name = file.split("/")[-1]
         shutil.copy(src=file, dst=f"library/{name}")
+
+
+def clear_folder(path: str, app: ctk.CTk):
+    warning = ctk.CTkToplevel(master=app)
+    name = "temporary" if path == "temp" else path
+    warning.title(f"Delete {name} wallpapers!")
+
+    window_height = 150
+    window_width = 450
+
+    screen_width = app.winfo_screenwidth()
+    screen_height = app.winfo_screenheight()
+
+    x = int((screen_width / 2) - (window_width / 2))
+    y = int((screen_height / 2) - (window_height / 2))
+
+    warning.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    warning.grid_rowconfigure(0, weight=1)
+    warning.grid_columnconfigure(0, weight=1)
+
+    ctk.CTkLabel(
+        master=warning,
+        text="You image will be deleted permanently. You can't restore them later!",
+    ).grid(row=0, columnspan=3, padx=20, pady=20, sticky="nwse")
+
+    def delete_files():
+        files = glob(f"{path}/*.jpg") + glob(f"{path}/*.png")
+        for file in files:
+            os.remove(file)
+        warning.destroy()
+
+    ctk.CTkButton(
+        master=warning,
+        text="Delete",
+        fg_color=["#a44", "#800"],
+        hover_color=["#800", "#a44"],
+        command=delete_files,
+    ).grid(row=1, column=1, padx=10, pady=10, sticky="e")
+
+    ctk.CTkButton(
+        master=warning,
+        text="Cancel",
+        fg_color=["#aaa", "#777"],
+        hover_color=["#777", "#aaa"],
+        command=warning.destroy,
+    ).grid(row=1, column=2, padx=10, pady=10, sticky="e")
+
+    warning.mainloop()
