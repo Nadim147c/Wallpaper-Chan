@@ -1,5 +1,7 @@
 from functions import set_random, folder, settings, auto_change, filters, config
 from threading import Thread
+from PIL import Image
+from pystray import Icon, Menu, MenuItem
 import customtkinter as ctk
 import tkinter as tk
 import os
@@ -25,13 +27,30 @@ app.title("Wallpaper Chan")
 app.iconbitmap("assets/colored_main.ico")
 
 
-def destroy():
-    global app_life
-    app_life = False
-    app.destroy()
+def on_close():
+    def destroy():
+        global app_life
+        app_life = False
+        app.destroy()
+        icon.stop()
+
+    def open_app():
+        app.iconify()
+        icon.stop()
+
+    app.withdraw()
+    icon_image = Image.open("assets/colored_main.ico")
+    icon = Icon(
+        "Wallpaper Chan",
+        icon_image,
+        "Wallpaper Chan",
+        menu=Menu(MenuItem("Open", open_app), MenuItem("Exit", destroy)),
+    )
+
+    icon.run()
 
 
-app.protocol("WM_DELETE_WINDOW", destroy)
+app.protocol("WM_DELETE_WINDOW", on_close)
 
 window_height = 600
 window_width = 700
