@@ -4,3 +4,4 @@ cache
 temporary
 config.json
 __pycache__
+functions/__pycache__

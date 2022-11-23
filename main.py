@@ -1,15 +1,13 @@
+from functions import set_random, folder, settings, auto_change, filters, config
 from threading import Thread
 import customtkinter as ctk
 import tkinter as tk
-import funcs as fn
-import set_random as set_rand
-import config
 import os
-import time
 
 
 config = config.Config.get_config()
 app_life = True
+get_app_life = lambda: app_life
 
 if not os.path.exists("library"):
     os.mkdir("library")
@@ -24,20 +22,16 @@ ctk.set_default_color_theme(config.color)
 
 app = ctk.CTk()
 app.title("Wallpaper Chan")
+app.iconbitmap("assets/colored_main.ico")
 
 
-def on_closing():
+def destroy():
     global app_life
     app_life = False
     app.destroy()
 
-# TODO: Make minimize on system tray
-def on_minimize(x):
-    print("minimized")
 
-
-app.bind("<Unmap>", on_minimize)
-app.protocol("WM_DELETE_WINDOW", on_closing)
+app.protocol("WM_DELETE_WINDOW", destroy)
 
 window_height = 600
 window_width = 700
@@ -85,13 +79,13 @@ ctk.CTkLabel(
 ctk.CTkButton(
     master=set_random_frame,
     text="Internet",
-    command=lambda: set_rand.set_from_wallpaper_abyss_with_progress(config, app),
+    command=lambda: set_random.set_from_wallpaper_abyss_with_progress(config, app),
 ).grid(row=1, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=set_random_frame,
     text="Library",
-    command=lambda: Thread(target=set_rand.set_from_library).start(),
+    command=lambda: Thread(target=set_random.set_from_library).start(),
 ).grid(row=2, pady=10, padx=5, sticky="we")
 
 
@@ -107,48 +101,41 @@ ctk.CTkLabel(
 ).grid(row=0, pady=5, padx=5, sticky="we")
 
 ctk.CTkButton(
-    master=open_folder_frame, text="Library", command=lambda: fn.open_folder("library")
+    master=open_folder_frame,
+    text="Library",
+    command=lambda: folder.open_folder("library"),
 ).grid(row=1, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=open_folder_frame,
     text="Temporary",
-    command=lambda: fn.open_folder("temporary"),
+    command=lambda: folder.open_folder("temporary"),
 ).grid(row=2, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=open_folder_frame,
     text="Cache",
-    command=lambda: fn.open_folder("cache"),
+    command=lambda: folder.open_folder("cache"),
 ).grid(row=3, pady=10, padx=5, sticky="we")
 
 
-# Setting
-
+# Settings
 ctk.CTkLabel(master=left_frame, text="Settings:", text_font=("Arial bold", -12)).grid(
     row=3,
     sticky="wes",
 )
 
 ctk.CTkButton(
-    master=left_frame, text="Add to library", command=lambda: fn.add_to_library(app)
+    master=left_frame,
+    text="Add to library",
+    command=lambda: settings.add_to_library(app),
 ).grid(row=4, sticky="wes", pady=5, padx=10)
 
 
-def change_theme(theme):
-    config.theme = theme
-    config.save()
-    ctk.set_appearance_mode(theme)
-    mode = ctk.appearance_mode_tracker.AppearanceModeTracker.get_mode()
-    if theme.lower() == "system":
-        mode = (
-            ctk.appearance_mode_tracker.AppearanceModeTracker.detect_appearance_mode()
-        )
-    filtered_tag_frame.configure(bg="#383838" if mode == 1 else "#d1d1d1")
-
-
 theme = ctk.CTkOptionMenu(
-    master=left_frame, values=["System", "Light", "Dark"], command=change_theme
+    master=left_frame,
+    values=["System", "Light", "Dark"],
+    command=lambda x: settings.change_theme(x, config, filtered_tag_frame),
 )
 theme.grid(row=5, sticky="wes", pady=5, padx=10)
 theme.set("Theme")
@@ -188,22 +175,6 @@ auto_change_frame.grid_columnconfigure(0, weight=1)
 auto_change_frame.grid_columnconfigure(1, weight=1)
 
 
-def auto_change_wallpaper():
-    auto_change_active_time = time.time()
-    while config.auto_change and app_life:
-        time.sleep(0.7)
-        current_time = time.time()
-        difference = current_time - auto_change_active_time
-        if difference >= config.auto_change_time:
-            if config.auto_change_source == 0:
-                set_rand.set_from_wallpaper_abyss(config)
-            else:
-                set_rand.set_from_library()
-            auto_change_active_time = current_time
-        else:
-            continue
-
-
 ctk.CTkLabel(
     master=auto_change_frame,
     text="Auto change wallpaper:",
@@ -217,17 +188,12 @@ ctk.CTkLabel(
 )
 
 
-def toggle_auto_change():
-    config.auto_change = auto_change_switch.check_state
-    config.save()
-    if config.auto_change:
-        Thread(target=auto_change_wallpaper).start()
-
-
 auto_change_switch = ctk.CTkSwitch(
     master=auto_change_frame,
     text="Auto change wallpaper",
-    command=toggle_auto_change,
+    command=lambda: auto_change.toggle_auto_change(
+        config, auto_change_switch, get_app_life
+    ),
 )
 auto_change_switch.grid(row=1, columnspan=2, sticky="we", padx=10)
 
@@ -235,36 +201,13 @@ if config.auto_change and not auto_change_switch.check_state:
     auto_change_switch.toggle()
 
 
-def set_auto_change_source(name):
-    config.auto_change_source = 0 if name == "Internet" else 1
-    config.save()
-
-
 auto_change_source = ctk.CTkOptionMenu(
     master=auto_change_frame,
     values=["Internet", "Library"],
-    command=set_auto_change_source,
+    command=lambda x: auto_change.set_auto_change_source(config, x),
 )
 auto_change_source.grid(row=2, pady=10, padx=5, sticky="we")
 auto_change_source.set("Internet" if config.auto_change_source == 0 else "Library")
-
-
-def set_auto_change_time(time):
-    if time == "Every minute":
-        time = 60
-    elif time == "Every 5 minutes":
-        time = 60 * 5
-    elif time == "Every 10 minutes":
-        time = 60 * 10
-    elif time == "Every 30 minutes":
-        time = 60 * 30
-    elif time == "Every hour":
-        time = 60 * 60
-    else:
-        time = 60 * 60 * 2
-
-    config.auto_change_time = time
-    config.save()
 
 
 auto_change_time = ctk.CTkOptionMenu(
@@ -277,10 +220,9 @@ auto_change_time = ctk.CTkOptionMenu(
         "Every hour",
         "Every 2 hours",
     ],
-    command=set_auto_change_time,
+    command=lambda x: auto_change.set_auto_change_time(config, x),
 )
 auto_change_time.grid(row=2, column=1, pady=10, padx=5, sticky="we")
-
 
 if config.auto_change_time == 60:
     auto_change_time.set("Every minute")
@@ -322,7 +264,7 @@ ctk.CTkButton(
     text="Clear Temporary Wallpapers",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=lambda: fn.clear_folder("temporary", app),
+    command=lambda: folder.clear_folder("temporary", app),
 ).grid(row=1, sticky="we", pady=5, padx=5)
 
 
@@ -331,7 +273,7 @@ ctk.CTkButton(
     text="Clear Library Wallpapers",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=lambda: fn.clear_folder("library", app),
+    command=lambda: folder.clear_folder("library", app),
 ).grid(row=1, column=1, sticky="we", pady=5, padx=5)
 
 ctk.CTkButton(
@@ -339,7 +281,7 @@ ctk.CTkButton(
     text="Clear page cache",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=lambda: fn.clear_folder("cache", app),
+    command=lambda: folder.clear_folder("cache", app),
 ).grid(row=1, column=2, sticky="we", pady=5, padx=5)
 
 
@@ -360,10 +302,7 @@ ctk.CTkLabel(master=filters_frame, text="Filters:", text_font=("Arial bold", -12
 )
 
 
-filtered_tag_frame = tk.Frame(
-    master=filters_frame,
-)
-
+filtered_tag_frame = tk.Frame(master=filters_frame)
 filtered_tag_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nwse")
 filtered_tag_frame.configure(
     bg="#383838"
@@ -372,86 +311,11 @@ filtered_tag_frame.configure(
 )
 
 
-def add_filter(text):
-    text_content = text.get()
-    text.delete(0, len(text_content))
-    config.filters.append(text_content)
-    config.save()
-    show_filters()
-
-
-def show_filters(*args):
-    width = app.winfo_width()
-    height = app.winfo_height()
-
-    if not len(args) == 0:
-        time.sleep(1)
-
-    if not width == app.winfo_width():
-        return
-    elif not height == app.winfo_height():
-        return
-
-    for widgets in filtered_tag_frame.winfo_children():
-        widgets.destroy()
-
-    app.update()
-
-    filtered_tag_frame_width = filtered_tag_frame.winfo_width()
-    filtered_tag_frame_height = filtered_tag_frame.winfo_height()
-
-    padx = 5 / filtered_tag_frame_width
-    pady = 5 / filtered_tag_frame_height
-
-    tag_x = 0
-    tag_y = pady
-
-    rely_increase = 24 / filtered_tag_frame_height
-
-    for i, tag in enumerate(config.filters):
-
-        def get_button_function(i):
-            def remove_filter():
-                del config.filters[i]
-                config.save()
-                show_filters()
-
-            return remove_filter
-
-        remove_filter_function = get_button_function(i)
-
-        label = ctk.CTkButton(
-            master=filtered_tag_frame,
-            text=tag,
-            text_font=("Arial Bold", -12),
-            corner_radius=10,
-            width=1,
-            height=1,
-        )
-
-        label.configure(command=remove_filter_function)
-
-        tag_x += padx
-
-        label.place(relx=tag_x, rely=tag_y)
-
-        filtered_tag_frame.update()
-
-        relx_increase = label.winfo_width() / filtered_tag_frame_width
-
-        tag_x += relx_increase
-
-        if tag_x > 1:
-            tag_y += rely_increase + pady
-            tag_x = 0 + padx
-
-            label.place(relx=tag_x, rely=tag_y)
-
-            tag_x += relx_increase
-
-
 filtered_tag_frame.bind(
-    "<Configure>", lambda x: Thread(target=lambda: show_filters(x)).start()
+    "<Configure>",
+    lambda x: Thread(
+        target=lambda: filters.show_filters(app, filtered_tag_frame, config, True)
+    ).start(),
 )
 
 
@@ -459,10 +323,17 @@ filter_entry = ctk.CTkEntry(master=filters_frame)
 filter_entry.grid(row=2, column=0, padx=10, sticky="we")
 
 
-filter_entry.bind("<Return>", lambda x: add_filter(filter_entry.entry))
+filter_entry.bind(
+    "<Return>",
+    lambda x: filters.add_filter(app, filtered_tag_frame, config, filter_entry.entry),
+)
 
 ctk.CTkButton(
-    master=filters_frame, text="add", command=lambda: add_filter(filter_entry.entry)
+    master=filters_frame,
+    text="add",
+    command=lambda: filters.add_filter(
+        app, filtered_tag_frame, config, filter_entry.entry
+    ),
 ).grid(row=2, column=1, sticky="we", pady=10, padx=5)
 
 ctk.CTkLabel(

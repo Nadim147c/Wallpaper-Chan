@@ -1,33 +1,19 @@
-from tkinter import filedialog
 from glob import glob
 import customtkinter as ctk
-import shutil
 import subprocess
 import os
 
 
-def open_folder(path):
+def open_folder(path: str):
     FILEBROWSER_PATH = os.path.join(os.getenv("WINDIR"), "explorer.exe")
     path = os.path.normpath(path)
     subprocess.run([FILEBROWSER_PATH, path])
 
 
-def add_to_library(app):
-    file_names = filedialog.askopenfilenames(
-        title="Wallpaper Chan",
-        initialdir="temporary",
-        filetypes=[("Image", r"*.jpg *.png")],
-        parent=app,
-    )
-
-    for file in file_names:
-        name = file.split("/")[-1]
-        shutil.copy(src=file, dst=f"library/{name}")
-
-
 def clear_folder(path: str, app: ctk.CTk):
     warning = ctk.CTkToplevel(master=app)
     warning.title(f"Delete {path} wallpapers!")
+    warning.iconbitmap("assets/colored_main.ico")
 
     window_height = 150
     window_width = 450

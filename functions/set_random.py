@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from glob import glob
 from threading import Thread
+from functions.config import Config
 import customtkinter as ctk
 import random
 import re
@@ -10,7 +11,7 @@ import hashlib
 import os
 
 
-def set_from_wallpaper_abyss(config):
+def set_from_wallpaper_abyss(config: Config):
     wallpapers = []
 
     while len(wallpapers) == 0:
@@ -59,10 +60,10 @@ def set_from_wallpaper_abyss(config):
     ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
 
 
-def set_from_wallpaper_abyss_with_progress(config, app: ctk.CTk):
+def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
 
     progress = ctk.CTkToplevel(master=app)
-    # progress.overrideredirect(True)
+    progress.overrideredirect(True)
 
     window_height = 60
     window_width = 400
@@ -104,7 +105,6 @@ def set_from_wallpaper_abyss_with_progress(config, app: ctk.CTk):
                         htmlContent.iter_content(chunk_size=chunk_size)
                     ):
                         downloaded = ((i + 1) * chunk_size) / average_size
-                        print(downloaded)
                         progress_bar.set(downloaded)
                         label.set_text(f"Finding: {int(downloaded* 100)}%")
                         f.write(data)
