@@ -15,7 +15,7 @@ def open_folder(path):
 def add_to_library(app):
     file_names = filedialog.askopenfilenames(
         title="Wallpaper Chan",
-        initialdir="temp",
+        initialdir="temporary",
         filetypes=[("Image", r"*.jpg *.png")],
         parent=app,
     )
@@ -27,8 +27,7 @@ def add_to_library(app):
 
 def clear_folder(path: str, app: ctk.CTk):
     warning = ctk.CTkToplevel(master=app)
-    name = "temporary" if path == "temp" else path
-    warning.title(f"Delete {name} wallpapers!")
+    warning.title(f"Delete {path} wallpapers!")
 
     window_height = 150
     window_width = 450
@@ -50,7 +49,7 @@ def clear_folder(path: str, app: ctk.CTk):
     ).grid(row=0, columnspan=3, padx=20, pady=20, sticky="nwse")
 
     def delete_files():
-        files = glob(f"{path}/*.jpg") + glob(f"{path}/*.png")
+        files = glob(f"{path}/*.jpg") + glob(f"{path}/*.png") + glob(f"{path}/*.txt")
         for file in files:
             os.remove(file)
         warning.destroy()

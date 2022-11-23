@@ -26,7 +26,7 @@ class Config:
                 open_file.close()
         else:
             config = {
-                "auto_change": True,
+                "auto_change": False,
                 "auto_change_time": 60,
                 "auto_change_source": 0,
                 "theme": "system",
