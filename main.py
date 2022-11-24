@@ -47,13 +47,21 @@ def on_close():
         menu=Menu(MenuItem("Open", open_app), MenuItem("Exit", destroy)),
     )
 
+    if not config.system_tray:
+        destroy()
+
     icon.run()
+
+
+if config.minimized:
+    on_close()
 
 
 app.protocol("WM_DELETE_WINDOW", on_close)
 
 window_height = 600
 window_width = 700
+app.minsize(height=window_height, width=window_width)
 
 screen_width = app.winfo_screenwidth()
 screen_height = app.winfo_screenheight()
@@ -144,11 +152,45 @@ ctk.CTkLabel(master=left_frame, text="Settings:", text_font=("Arial bold", -12))
     sticky="wes",
 )
 
+run_on_start = ctk.CTkSwitch(
+    master=left_frame,
+    text="Run on startup",
+    command=lambda: settings.set_startup_registry(run_on_start.check_state),
+)
+run_on_start.grid(row=4, sticky="wes", padx=10, pady=3)
+if settings.check_startup_registry():
+    run_on_start.select()
+
+
+start_minimized = ctk.CTkSwitch(
+    master=left_frame,
+    text="Start minimized",
+    state="normal" if config.system_tray else "disabled",
+    command=lambda: settings.toggle_minimized_start(
+        config, start_minimized.check_state
+    ),
+)
+start_minimized.grid(row=5, sticky="wes", padx=10, pady=3)
+if config.minimized:
+    start_minimized.select()
+
+exit_to_system_tray = ctk.CTkSwitch(
+    master=left_frame,
+    text="Exit to system tray",
+    command=lambda: settings.toggle_system_tray(
+        config, exit_to_system_tray.check_state, start_minimized
+    ),
+)
+exit_to_system_tray.grid(row=6, sticky="wes", padx=10, pady=3)
+if config.system_tray:
+    exit_to_system_tray.select()
+
+
 ctk.CTkButton(
     master=left_frame,
     text="Add to library",
     command=lambda: settings.add_to_library(app),
-).grid(row=4, sticky="wes", pady=5, padx=10)
+).grid(row=7, sticky="wes", pady=5, padx=10)
 
 
 theme = ctk.CTkOptionMenu(
@@ -156,7 +198,7 @@ theme = ctk.CTkOptionMenu(
     values=["System", "Light", "Dark"],
     command=lambda x: settings.change_theme(x, config, filtered_tag_frame),
 )
-theme.grid(row=5, sticky="wes", pady=5, padx=10)
+theme.grid(row=8, sticky="wes", pady=5, padx=10)
 theme.set("Theme")
 
 color_change_warning = ctk.CTkLabel(
@@ -167,22 +209,12 @@ color_change_warning = ctk.CTkLabel(
 )
 
 
-def change_color(color: str):
-    color = "-".join(color.lower().split(" "))
-    config.color = color
-    config.save()
-    ctk.set_default_color_theme(color)
-    color_change_warning.grid(
-        row=7,
-        sticky="wes",
-        pady=2,
-    )
-
-
 color = ctk.CTkOptionMenu(
-    master=left_frame, values=["Green", "Blue", "Dark Blue"], command=change_color
+    master=left_frame,
+    values=["Green", "Blue", "Dark Blue"],
+    command=lambda x: settings.change_color(config, x, color_change_warning),
 )
-color.grid(row=6, sticky="wes", pady=5, padx=10)
+color.grid(row=9, sticky="wes", pady=5, padx=10)
 color.set("Color")
 
 
@@ -206,7 +238,6 @@ ctk.CTkLabel(
     padx=5,
 )
 
-
 auto_change_switch = ctk.CTkSwitch(
     master=auto_change_frame,
     text="Auto change wallpaper",
@@ -216,8 +247,8 @@ auto_change_switch = ctk.CTkSwitch(
 )
 auto_change_switch.grid(row=1, columnspan=2, sticky="we", padx=10)
 
-if config.auto_change and not auto_change_switch.check_state:
-    auto_change_switch.toggle()
+if config.auto_change:
+    auto_change_switch.select()
 
 
 auto_change_source = ctk.CTkOptionMenu(

@@ -11,6 +11,8 @@ class Config:
         theme: str,
         color: str,
         filters: list[str],
+        minimized: bool,
+        system_tray: bool,
     ):
         self.auto_change = auto_change
         self.auto_change_time = auto_change_time
@@ -18,6 +20,8 @@ class Config:
         self.theme = theme
         self.color = color
         self.filters = filters
+        self.minimized = minimized
+        self.system_tray = system_tray
 
     def get_config():
         if os.path.exists("config.json"):
@@ -29,6 +33,8 @@ class Config:
                 "auto_change": False,
                 "auto_change_time": 60,
                 "auto_change_source": 0,
+                "minimized": True,
+                "system_tray": True,
                 "theme": "system",
                 "color": "green",
                 "filters": [],
