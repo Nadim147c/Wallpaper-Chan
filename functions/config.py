@@ -33,7 +33,7 @@ class Config:
                 "auto_change": False,
                 "auto_change_time": 60,
                 "auto_change_source": 0,
-                "minimized": True,
+                "minimized": False,
                 "system_tray": True,
                 "theme": "system",
                 "color": "green",
