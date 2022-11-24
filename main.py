@@ -59,7 +59,7 @@ if config.minimized:
 
 app.protocol("WM_DELETE_WINDOW", on_close)
 
-window_height = 600
+window_height = 700
 window_width = 700
 app.minsize(height=window_height, width=window_width)
 
