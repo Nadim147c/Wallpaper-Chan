@@ -68,7 +68,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "-startup":
 
 app.protocol("WM_DELETE_WINDOW", on_close)
 
-window_height = 700
+window_height = 620
 window_width = 700
 app.minsize(height=window_height, width=window_width)
 
