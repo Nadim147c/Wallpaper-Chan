@@ -58,7 +58,6 @@ def show_filters(
             image=cross,
             compound="right",
             text_font=("Arial Bold", -12),
-            corner_radius=10,
             width=1,
             height=1,
         )

@@ -1,6 +1,5 @@
 import os
 import json
-import time
 
 
 class Config:
@@ -13,6 +12,7 @@ class Config:
         theme: str,
         color: str,
         filters: list[str],
+        config_path: str,
     ):
         self.auto_change = auto_change
         self.auto_change_time = auto_change_time
@@ -21,10 +21,11 @@ class Config:
         self.theme = theme
         self.color = color
         self.filters = filters
+        self.config_path = config_path
 
-    def get_config():
-        if os.path.exists("config.json"):
-            with open("config.json", "r") as open_file:
+    def get_config(config_path):
+        if os.path.exists(config_path):
+            with open(config_path, "r") as open_file:
                 config = json.loads(open_file.read())
 
         else:
@@ -37,14 +38,19 @@ class Config:
                 "color": "green",
                 "filters": [],
             }
-            with open("config.json", "w") as outfile:
+            with open(config_path, "w") as outfile:
                 outfile.write(json.dumps(config, indent=4))
+
+        config["config_path"] = config_path
 
         return Config(**config)
 
     def save(self):
-        with open("config.json", "w") as outfile:
+        path = self.config_path
+        del self.config_path
+        with open(path, "w") as outfile:
             outfile.write(json.dumps(self.__dict__, indent=4))
+        self.config_path = path
 
     def __repr__(self) -> str:
-        return "<Config>"
+        return "<Configuration>"

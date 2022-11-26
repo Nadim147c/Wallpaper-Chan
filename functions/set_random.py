@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from glob import glob
 from threading import Thread
 from functions.config import Config
+from tkinter.messagebox import showerror
 import customtkinter as ctk
 import random
 import re
@@ -11,24 +12,24 @@ import hashlib
 import os
 
 
-def set_from_wallpaper_abyss(config: Config):
+def set_from_wallpaper_abyss(temp_path: str, cache_path: str, config: Config):
     wallpapers = []
 
     while len(wallpapers) == 0:
         page = random.randint(1, 500)
-        doc_path = f"cache/page{str(page)}.txt"
+        doc_path = f"{cache_path}/page{str(page)}.txt"
 
         if not os.path.exists(doc_path):
             htmlContent = requests.get(
                 f"https://wall.alphacoders.com/by_category.php?id=3&name=Anime+Wallpapers&filter=4K+Ultra+HD&page={page}"
             ).text
 
-            with open(doc_path, "w", encoding="utf-8") as f:
-                f.write(htmlContent)
+            with open(doc_path, "w", encoding="utf-8") as file:
+                file.write(htmlContent)
             text = htmlContent
         else:
-            with open(doc_path, "rb") as f:
-                text = f.read()
+            with open(doc_path, "rb") as file:
+                text = file.read()
 
         soup = BeautifulSoup(text, "html.parser")
 
@@ -49,7 +50,7 @@ def set_from_wallpaper_abyss(config: Config):
     image = requests.get(url)
 
     hash_str = hashlib.md5(str(url).encode("utf-8")).hexdigest()
-    path = f"temporary/{hash_str}.jpg"
+    path = f"{temp_path}/{hash_str}.jpg"
 
     with open(path, "wb") as file:
         file.write(image.content)
@@ -57,7 +58,9 @@ def set_from_wallpaper_abyss(config: Config):
     ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
 
 
-def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
+def set_from_wallpaper_abyss_with_progress(
+    temp_path: str, cache_path: str, config: Config, app: ctk.CTk
+):
 
     progress = ctk.CTkToplevel(master=app)
     progress.overrideredirect(True)
@@ -88,7 +91,7 @@ def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
         while len(wallpapers) == 0:
             page = random.randint(1, 500)
 
-            doc_path = f"cache/page{str(page)}.txt"
+            doc_path = f"{cache_path}/page{str(page)}.txt"
             if not os.path.exists(doc_path):
                 page_url = f"https://wall.alphacoders.com/by_category.php?id=3&name=Anime+Wallpapers&filter=4K+Ultra+HD&page={page}"
 
@@ -132,7 +135,7 @@ def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
         total_size = int(image.headers["content-length"])
 
         hash_str = hashlib.md5(str(image_url).encode("utf-8")).hexdigest()
-        path = f"temporary/{hash_str}.jpg"
+        path = f"{temp_path}/{hash_str}.jpg"
 
         image.raise_for_status()
 
@@ -150,7 +153,14 @@ def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
     progress.mainloop()
 
 
-def set_from_library():
-    files = glob("library/*.jpg") + glob("library/*.png")
+def set_from_library(library_path: str, error: bool = False):
+    files = glob(f"{library_path}/*.jpg") + glob(f"{library_path}/*.png")
+    if len(files) == 0:
+        if error:
+            showerror(
+                title="Library is empty",
+                message="Library folder is empty. Add some wallpaper to library!",
+            )
+        return
     file = random.choice(files)
     ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(file), 0)

@@ -3,20 +3,19 @@ from functions.config import Config
 import customtkinter as ctk
 import winreg
 import shutil
-import os
 
 
-def add_to_library(app: ctk.CTk):
+def add_to_library(app: ctk.CTk, temp_path: str, library_path: str):
     file_names = filedialog.askopenfilenames(
         title="Wallpaper Chan",
-        initialdir="temporary",
+        initialdir=temp_path,
         filetypes=[("Image", r"*.jpg *.png")],
         parent=app,
     )
 
     for file in file_names:
         name = file.split("/")[-1]
-        shutil.copy(src=file, dst=f"library/{name}")
+        shutil.copy(src=file, dst=f"{library_path}/{name}")
 
 
 def change_theme(theme: str, config: Config, filtered_tag_frame: ctk.CTkFrame):
@@ -48,7 +47,7 @@ def toggle_system_tray(config: Config, state: bool):
     config.save()
 
 
-def set_startup_registry(path, autostart: bool = True) -> bool:
+def set_startup_registry(path: str, autostart: bool = True) -> bool:
     app_name = "Wallpaper Chan"
     address = f'"{path}\\{app_name}.exe" -startup'
     with winreg.OpenKey(

@@ -2,25 +2,43 @@ from functions import set_random, folder, settings, auto_change, filters, config
 from threading import Thread
 from PIL import Image
 from pystray import Icon, Menu, MenuItem
+from os import path, chdir, mkdir
 import customtkinter as ctk
 import tkinter as tk
+import ctypes.wintypes
 import sys
-import os
 
-path = os.path.split(__file__)[0]
-os.chdir(path)
 
-config = config.Config.get_config()
+buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf)
+
+documents = buf.value
+
+app_dir = path.split(__file__)[0]
+chdir(app_dir)
+
+
+root_folder = path.join(documents, "Wallpaper Chan")
+if not path.exists(root_folder):
+    mkdir(root_folder)
+
+library_folder = path.join(root_folder, "library")
+if not path.exists(library_folder):
+    mkdir(library_folder)
+
+temporary_folder = path.join(root_folder, "temporary")
+if not path.exists(temporary_folder):
+    mkdir(temporary_folder)
+
+cache_folder = path.join(root_folder, "cache")
+if not path.exists(cache_folder):
+    mkdir(cache_folder)
+
+config_path = path.join(root_folder, "config.json")
+
+config = config.Config.get_config(config_path)
 app_life = True
 get_app_life = lambda: app_life
-
-if not os.path.exists("library"):
-    os.mkdir("library")
-if not os.path.exists("temporary"):
-    os.mkdir("temporary")
-if not os.path.exists("cache"):
-    os.mkdir("cache")
-
 
 ctk.set_appearance_mode(config.theme)
 ctk.set_default_color_theme(config.color)
@@ -69,7 +87,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "-startup":
 app.protocol("WM_DELETE_WINDOW", on_close)
 
 window_height = 620
-window_width = 700
+window_width = 720
 app.minsize(height=window_height, width=window_width)
 
 screen_width = app.winfo_screenwidth()
@@ -116,13 +134,17 @@ ctk.CTkLabel(
 ctk.CTkButton(
     master=set_random_frame,
     text="Internet",
-    command=lambda: set_random.set_from_wallpaper_abyss_with_progress(config, app),
+    command=lambda: set_random.set_from_wallpaper_abyss_with_progress(
+        temporary_folder, cache_folder, config, app
+    ),
 ).grid(row=1, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=set_random_frame,
     text="Library",
-    command=lambda: Thread(target=set_random.set_from_library).start(),
+    command=lambda: Thread(
+        target=lambda: set_random.set_from_library(library_folder, True)
+    ).start(),
 ).grid(row=2, pady=10, padx=5, sticky="we")
 
 
@@ -140,19 +162,19 @@ ctk.CTkLabel(
 ctk.CTkButton(
     master=open_folder_frame,
     text="Library",
-    command=lambda: folder.open_folder("library"),
+    command=lambda: folder.open_folder(library_folder),
 ).grid(row=1, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=open_folder_frame,
     text="Temporary",
-    command=lambda: folder.open_folder("temporary"),
+    command=lambda: folder.open_folder(temporary_folder),
 ).grid(row=2, pady=10, padx=5, sticky="we")
 
 ctk.CTkButton(
     master=open_folder_frame,
     text="Cache",
-    command=lambda: folder.open_folder("cache"),
+    command=lambda: folder.open_folder(cache_folder),
 ).grid(row=3, pady=10, padx=5, sticky="we")
 
 
@@ -166,7 +188,7 @@ ctk.CTkLabel(master=left_frame, text="Settings:", text_font=("Arial bold", -12))
 run_on_start = ctk.CTkSwitch(
     master=left_frame,
     text="Run on startup",
-    command=lambda: settings.set_startup_registry(path, run_on_start.check_state),
+    command=lambda: settings.set_startup_registry(app_dir, run_on_start.check_state),
 )
 run_on_start.grid(row=4, sticky="wes", padx=10, pady=3)
 if settings.check_startup_registry():
@@ -187,7 +209,7 @@ if config.system_tray:
 ctk.CTkButton(
     master=left_frame,
     text="Add to library",
-    command=lambda: settings.add_to_library(app),
+    command=lambda: settings.add_to_library(app, temporary_folder, library_folder),
 ).grid(row=7, sticky="wes", pady=5, padx=10)
 
 
@@ -240,7 +262,12 @@ auto_change_switch = ctk.CTkSwitch(
     master=auto_change_frame,
     text="Auto change wallpaper",
     command=lambda: auto_change.toggle_auto_change(
-        config, auto_change_switch, get_app_life
+        temporary_folder,
+        library_folder,
+        cache_folder,
+        config,
+        auto_change_switch,
+        get_app_life,
     ),
 )
 auto_change_switch.grid(row=1, columnspan=2, sticky="we", padx=10)
@@ -312,7 +339,7 @@ ctk.CTkButton(
     text="Clear Temporary Wallpapers",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=lambda: folder.clear_folder("temporary", app),
+    command=lambda: folder.clear_folder(temporary_folder, "temporary", app),
 ).grid(row=1, sticky="we", pady=5, padx=5)
 
 
@@ -321,7 +348,7 @@ ctk.CTkButton(
     text="Clear Library Wallpapers",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=lambda: folder.clear_folder("library", app),
+    command=lambda: folder.clear_folder(library_folder, "library", app),
 ).grid(row=1, column=1, sticky="we", pady=5, padx=5)
 
 ctk.CTkButton(
@@ -329,7 +356,7 @@ ctk.CTkButton(
     text="Clear page cache",
     fg_color=["#aaa", "#777"],
     hover_color=["#a44", "#800"],
-    command=lambda: folder.clear_folder("cache", app),
+    command=lambda: folder.clear_folder(cache_folder, "cache", app),
 ).grid(row=1, column=2, sticky="we", pady=5, padx=5)
 
 
@@ -382,7 +409,7 @@ ctk.CTkButton(
     command=lambda: filters.add_filter(
         app, filtered_tag_frame, config, filter_entry.entry
     ),
-).grid(row=2, column=1, sticky="we", pady=10, padx=5)
+).grid(row=2, column=1, sticky="we", pady=10, padx=10)
 
 ctk.CTkLabel(
     master=filters_frame,

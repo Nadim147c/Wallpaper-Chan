@@ -1,8 +1,4 @@
 .vscode
-library
-cache
-temporary
-config.json
 output
 __pycache__
 functions/__pycache__
