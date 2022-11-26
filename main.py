@@ -4,8 +4,11 @@ from PIL import Image
 from pystray import Icon, Menu, MenuItem
 import customtkinter as ctk
 import tkinter as tk
+import sys
 import os
 
+path = os.path.split(__file__)[0]
+os.chdir(path)
 
 config = config.Config.get_config()
 app_life = True
@@ -28,14 +31,17 @@ app.iconbitmap("assets/colored_main.ico")
 
 
 def on_close():
-    def destroy():
+    def destroy(exit_icon: bool = True):
         global app_life
         app_life = False
         app.destroy()
-        icon.stop()
+        if exit_icon:
+            icon.stop()
 
     def open_app():
         app.iconify()
+        app.deiconify()
+        app.focus_force()
         icon.stop()
 
     app.withdraw()
@@ -47,14 +53,17 @@ def on_close():
         menu=Menu(MenuItem("Open", open_app), MenuItem("Exit", destroy)),
     )
 
-    if not config.system_tray:
-        destroy()
+    if config.system_tray:
+        icon.run()
+    else:
+        destroy(False)
 
-    icon.run()
 
-
-if config.minimized:
-    on_close()
+if len(sys.argv) > 1 and sys.argv[1] == "-startup":
+    if config.system_tray:
+        on_close()
+    else:
+        app.iconify()
 
 
 app.protocol("WM_DELETE_WINDOW", on_close)
@@ -93,6 +102,7 @@ ctk.CTkLabel(
 
 
 # Set random from:---
+
 set_random_frame = ctk.CTkFrame(master=left_frame)
 set_random_frame.grid(row=1, padx=10, pady=10, sticky="we")
 
@@ -147,6 +157,7 @@ ctk.CTkButton(
 
 
 # Settings
+
 ctk.CTkLabel(master=left_frame, text="Settings:", text_font=("Arial bold", -12)).grid(
     row=3,
     sticky="wes",
@@ -155,30 +166,17 @@ ctk.CTkLabel(master=left_frame, text="Settings:", text_font=("Arial bold", -12))
 run_on_start = ctk.CTkSwitch(
     master=left_frame,
     text="Run on startup",
-    command=lambda: settings.set_startup_registry(run_on_start.check_state),
+    command=lambda: settings.set_startup_registry(path, run_on_start.check_state),
 )
 run_on_start.grid(row=4, sticky="wes", padx=10, pady=3)
 if settings.check_startup_registry():
     run_on_start.select()
 
-
-start_minimized = ctk.CTkSwitch(
-    master=left_frame,
-    text="Start minimized",
-    state="normal" if config.system_tray else "disabled",
-    command=lambda: settings.toggle_minimized_start(
-        config, start_minimized.check_state
-    ),
-)
-start_minimized.grid(row=5, sticky="wes", padx=10, pady=3)
-if config.minimized:
-    start_minimized.select()
-
 exit_to_system_tray = ctk.CTkSwitch(
     master=left_frame,
-    text="Exit to system tray",
+    text="Stay on system tray",
     command=lambda: settings.toggle_system_tray(
-        config, exit_to_system_tray.check_state, start_minimized
+        config, exit_to_system_tray.check_state
     ),
 )
 exit_to_system_tray.grid(row=6, sticky="wes", padx=10, pady=3)
@@ -248,7 +246,7 @@ auto_change_switch = ctk.CTkSwitch(
 auto_change_switch.grid(row=1, columnspan=2, sticky="we", padx=10)
 
 if config.auto_change:
-    auto_change_switch.select()
+    auto_change_switch.toggle()
 
 
 auto_change_source = ctk.CTkOptionMenu(

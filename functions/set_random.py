@@ -25,12 +25,10 @@ def set_from_wallpaper_abyss(config: Config):
 
             with open(doc_path, "w", encoding="utf-8") as f:
                 f.write(htmlContent)
-                f.close
             text = htmlContent
         else:
             with open(doc_path, "rb") as f:
                 text = f.read()
-                f.close()
 
         soup = BeautifulSoup(text, "html.parser")
 
@@ -55,7 +53,6 @@ def set_from_wallpaper_abyss(config: Config):
 
     with open(path, "wb") as file:
         file.write(image.content)
-        file.close()
 
     ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
 
@@ -108,11 +105,9 @@ def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
                         progress_bar.set(downloaded)
                         label.set_text(f"Finding: {int(downloaded* 100)}%")
                         f.write(data)
-                    f.close()
 
             with open(doc_path, "rb") as f:
                 text = f.read()
-                f.close()
 
             soup = BeautifulSoup(text, "html.parser")
 
@@ -147,7 +142,6 @@ def set_from_wallpaper_abyss_with_progress(config: Config, app: ctk.CTk):
                 progress_bar.set(downloaded)
                 label.set_text(f"Downloaded: {int(downloaded* 100)}%")
                 f.write(data)
-            f.close()
         progress.destroy()
 
         ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)

@@ -43,25 +43,14 @@ def change_color(config: Config, color: str, color_change_warning: ctk.CTkLabel)
     )
 
 
-def toggle_minimized_start(config: Config, state: bool):
-    config.minimized = state
-    config.save()
-
-
-def toggle_system_tray(config: Config, state: bool, minimized_start: ctk.CTkSwitch):
+def toggle_system_tray(config: Config, state: bool):
     config.system_tray = state
-    if state:
-        minimized_start.configure(state="normal")
-    else:
-        minimized_start.deselect()
-        config.minimized = False
-        minimized_start.configure(state="disabled")
     config.save()
 
 
-def set_startup_registry(autostart: bool = True) -> bool:
-    app_name = "Wallpaper Chan.exe"
-    address = os.path.join(os.path.realpath(__file__), app_name)
+def set_startup_registry(path, autostart: bool = True) -> bool:
+    app_name = "Wallpaper Chan"
+    address = f'"{path}\\{app_name}.exe" -startup'
     with winreg.OpenKey(
         key=winreg.HKEY_CURRENT_USER,
         sub_key=r"Software\Microsoft\Windows\CurrentVersion\Run",
@@ -78,7 +67,7 @@ def set_startup_registry(autostart: bool = True) -> bool:
 
 
 def check_startup_registry():
-    app_name = "Wallpaper Chan.exe"
+    app_name = "Wallpaper Chan"
 
     with winreg.OpenKey(
         key=winreg.HKEY_CURRENT_USER,

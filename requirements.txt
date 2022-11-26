@@ -1,0 +1,5 @@
+beautifulsoup4==4.11.1
+customtkinter==4.6.3
+Pillow==9.3.0
+pystray==0.19.4
+requests==2.28.1
