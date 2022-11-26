@@ -24,5 +24,6 @@ Follow [`customtkinter`](https://github.com/TomSchimansky/CustomTkinter/wiki/Pac
 pyinstaller --noconfirm --onedir --windowed --icon "assets/colored_main.ico" --name "Wallpaper Chan" --add-data "assets;assets/" --add-data "<CustomTkinter Location>/customtkinter;customtkinter/"  main.py
 ```
 
-##License
+## License
+
 Licensed under [MIT](LICENSE) license.
