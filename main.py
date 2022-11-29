@@ -77,13 +77,6 @@ def on_close():
         destroy(False)
 
 
-if len(sys.argv) > 1 and sys.argv[1] == "-startup":
-    if config.system_tray:
-        on_close()
-    else:
-        app.iconify()
-
-
 app.protocol("WM_DELETE_WINDOW", on_close)
 
 window_height = 620
@@ -417,5 +410,10 @@ ctk.CTkLabel(
     text_font=("Arial", -9),
 ).grid(row=4, columnspan=2, pady=0, padx=10)
 
+if "-startup" in sys.argv:
+    if config.system_tray:
+        on_close()
+    else:
+        app.iconify()
 
 app.mainloop()
