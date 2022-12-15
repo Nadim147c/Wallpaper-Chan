@@ -7,6 +7,7 @@ import customtkinter as ctk
 import random
 import re
 import ctypes
+import win32con
 import requests
 import hashlib
 import os
@@ -55,7 +56,7 @@ def set_from_wallpaper_abyss(temp_path: str, cache_path: str, config: Config):
     with open(path, "wb") as file:
         file.write(image.content)
 
-    ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
+    set_wallpaper(path)
 
 
 def set_from_wallpaper_abyss_with_progress(
@@ -147,7 +148,7 @@ def set_from_wallpaper_abyss_with_progress(
                 f.write(data)
         progress.destroy()
 
-        ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
+        set_wallpaper(path)
 
     progress.after(1000, Thread(target=download).start)
     progress.mainloop()
@@ -163,4 +164,12 @@ def set_from_library(library_path: str, error: bool = False):
             )
         return
     file = random.choice(files)
-    ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(file), 0)
+    set_wallpaper(file)
+
+
+def set_wallpaper(path):
+    changed = win32con.SPIF_UPDATEINIFILE | win32con.SPIF_SENDCHANGE
+    print(changed)
+    ctypes.windll.user32.SystemParametersInfoW(
+        win32con.SPI_SETDESKWALLPAPER, 0, os.path.abspath(path), changed
+    )
